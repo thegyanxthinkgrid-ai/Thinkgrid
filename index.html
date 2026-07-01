@@ -1137,6 +1137,77 @@ body::after{
   border:1px solid var(--border);transition:all .2s
 }
 .friend-row:hover{background:rgba(255,255,255,.04);border-color:var(--border2);transform:translateX(2px)}
+.friend-row.pending{border-color:rgba(251,191,36,.18);background:rgba(251,191,36,.03)}
+.friend-row.incoming{border-color:rgba(52,211,153,.22);background:rgba(52,211,153,.04)}
+.friend-avatar-wrap{position:relative;min-width:2.25rem}
+.friend-dot{position:absolute;bottom:-1px;right:-1px;width:.6rem;height:.6rem;border-radius:50%;border:2px solid var(--bg3)}
+.friend-dot.on{background:var(--emerald)}
+.friend-dot.off{background:var(--text3)}
+.friend-status-pill{
+  display:inline-flex;align-items:center;gap:.3rem;font-size:.56rem;font-family:var(--font-mono);
+  padding:.12rem .45rem;border-radius:.35rem;font-weight:700;letter-spacing:.03em;white-space:nowrap
+}
+.friend-status-pill.pending{background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.2)}
+.friend-status-pill.incoming{background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.2)}
+.friend-btn{
+  font-size:.6rem;padding:.32rem .6rem;border-radius:.5rem;font-family:var(--font-mono);font-weight:700;
+  border:1px solid var(--border2);color:var(--text2);background:rgba(255,255,255,.02);transition:all .15s;white-space:nowrap
+}
+.friend-btn:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,229,255,.06)}
+.friend-btn.accept{border-color:rgba(52,211,153,.35);color:#34d399}
+.friend-btn.accept:hover{background:rgba(52,211,153,.12)}
+.friend-btn.decline,.friend-btn.danger{border-color:rgba(248,113,113,.25);color:#f87171}
+.friend-btn.decline:hover,.friend-btn.danger:hover{background:rgba(248,113,113,.1)}
+.friend-btn.invite{border-color:rgba(167,139,250,.3);color:var(--purple)}
+.friend-btn.invite:hover{background:rgba(167,139,250,.12)}
+.fcode-card{
+  display:flex;align-items:center;gap:.75rem;padding:.8rem 1rem;border-radius:var(--radius);
+  background:linear-gradient(135deg,rgba(0,229,255,.05),rgba(124,58,237,.05));
+  border:1px solid rgba(0,229,255,.15);
+}
+.fcode-val{
+  font-family:var(--font-mono);font-weight:800;font-size:1rem;letter-spacing:.15em;color:var(--cyan);
+  cursor:pointer;flex:1;
+}
+.fcode-label{font-size:.55rem;font-family:var(--font-mono);letter-spacing:.15em;color:var(--text3);text-transform:uppercase}
+
+/* ─── TOASTS ─────────────────────────────────────────────── */
+.gx-toast-stack{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.6rem;max-width:20rem}
+.gx-toast{
+  background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border2);
+  border-radius:var(--radius);padding:.75rem .9rem;box-shadow:0 12px 35px rgba(0,0,0,.45);
+  font-family:var(--font-mono);font-size:.68rem;color:var(--text1);line-height:1.5;
+  opacity:0;transform:translateX(20px);transition:all .3s cubic-bezier(.16,1,.3,1);
+}
+.gx-toast.show{opacity:1;transform:translateX(0)}
+.gx-toast-actions{display:flex;gap:.4rem;margin-top:.5rem}
+.gx-toast-btn{
+  font-size:.6rem;padding:.3rem .65rem;border-radius:.4rem;font-family:var(--font-mono);font-weight:700;
+  border:1px solid var(--border2);color:var(--text1);background:rgba(255,255,255,.04);
+}
+.gx-toast-btn.primary{border-color:rgba(52,211,153,.35);color:#34d399}
+
+/* ─── INVITE SHEET ───────────────────────────────────────── */
+.invite-overlay{
+  position:fixed;inset:0;z-index:9998;background:rgba(2,4,10,.72);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;padding:1.25rem;opacity:0;transition:opacity .25s;
+}
+.invite-overlay.show{opacity:1}
+.invite-modal{
+  width:100%;max-width:24rem;background:linear-gradient(145deg,var(--bg4),var(--bg3));
+  border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.5rem;
+  display:flex;flex-direction:column;gap:.9rem;box-shadow:0 20px 60px rgba(0,0,0,.5);
+  transform:scale(.94);transition:transform .25s;
+}
+.invite-overlay.show .invite-modal{transform:scale(1)}
+.invite-modal-title{font-family:var(--font-display);font-weight:800;font-size:1.05rem;color:var(--text1)}
+.invite-modal-sub{font-size:.68rem;color:var(--text2);line-height:1.55}
+.invite-modal-text{
+  width:100%;min-height:5rem;resize:none;background:rgba(0,0,0,.3);border:1px solid var(--border2);
+  border-radius:var(--radius-sm);padding:.65rem;color:var(--text1);font-family:var(--font-mono);font-size:.68rem;line-height:1.5;
+}
+.invite-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.invite-modal-actions a,.invite-modal-actions button{text-align:center;justify-content:center;text-decoration:none}
 
 .hist-row{
   display:flex;align-items:center;gap:.75rem;padding:.7rem .875rem;
@@ -1894,6 +1965,7 @@ function mpUpdateSidebar(){
   document.getElementById('mp-sidebar').style.display='';
   const myScore=score;
   const opScore=mpOpponentScore;
+  const alreadyFriend=mpOpponentName&&friends.some(f=>f.status==='accepted'&&f.name===mpOpponentName);
   panel.innerHTML=`
     <div class="mp-player">
       <span class="mp-pip online"></span>
@@ -1906,7 +1978,10 @@ function mpUpdateSidebar(){
       <span class="mp-pname">${mpOpponentName||'Waiting...'}</span>
       ${mpRole==='host'?'<span class="mp-tag host">OPP</span>':''}
       <span class="mp-pscore">${opScore}</span>
-    </div>`;
+    </div>
+    ${mpOpponentName&&mpConn&&mpConn.open&&!alreadyFriend?`<button class="friend-btn" id="mp-add-friend-btn" style="margin-top:.5rem;width:100%">🤝 Add ${mpOpponentName} as Friend</button>`:''}`;
+  const addBtn=document.getElementById('mp-add-friend-btn');
+  if(addBtn)addBtn.addEventListener('click',()=>{sendLiveFriendRequest();addBtn.textContent='📨 Request Sent';addBtn.disabled=true;});
   const opEl=document.getElementById('sv-opponent');
   if(opEl){
     document.getElementById('sc-opponent').style.display='';
@@ -1924,12 +1999,13 @@ function mpReceive(raw){
     setStatus(`🎮 ${mpOpponentName} joined the battle!`);
     mpPlayers[mpOpponentName]=0;
     mpUpdateSidebar();
+    if(msg.code)resolvePendingFriend(msg.code,msg.name);
     if(mpRole==='host'){
       // Send game config and questions to guest
       const qs=[];
       for(let i=0;i<10;i++){qs.push(randQ(gdiff));}
       mpQuestions=qs;
-      mpSend({type:'game_start',mode:gmode,diff:gdiff,questions:qs,playerName:pname});
+      mpSend({type:'game_start',mode:gmode,diff:gdiff,questions:qs,playerName:pname,code:myFriendCode});
       mpGameStarted=true;
       gsrc='local';
       resetDeck();
@@ -1942,6 +2018,7 @@ function mpReceive(raw){
     mpGameStarted=true;
     setStatus(`🎮 Battle starting! Mode: ${gmode.toUpperCase()} · ${gdiff.toUpperCase()}`);
     mpUpdateSidebar();
+    if(msg.code)resolvePendingFriend(msg.code,msg.playerName);
     startGameFromMP(mpQuestions);
   } else if(msg.type==='score_update'){
     mpOpponentScore=msg.score;
@@ -1955,6 +2032,11 @@ function mpReceive(raw){
     setStatus(`${mpOpponentName} reacted: ${msg.emoji}`);
   } else if(msg.type==='chat'){
     setStatus(`💬 ${mpOpponentName}: ${msg.text}`);
+  } else if(msg.type==='friend_request'){
+    handleIncomingFriendRequest(msg.code,msg.name);
+  } else if(msg.type==='friend_accept'){
+    resolvePendingFriend(msg.code,msg.name);
+    showToast(`🤝 ${msg.name} accepted your friend request!`);
   }
 }
 
@@ -2039,6 +2121,7 @@ function mpReceive(raw){
         googleUser={sub:acc.sub,email:acc.email,name:acc.googleName,picture:acc.picture};
         pname=acc.username;
         showScreen('mode');
+        if(pendingJoinCode)handlePendingJoin();
       }else{
         showScreen('login');
       }
@@ -2144,6 +2227,29 @@ let tiv=null,ntout=null;
 let mpMode=false;
 let mpQuestionList=[];
 
+// ── Pending "join via link" support (offline invite messages) ────
+function getHashJoinCode(){
+  const m=location.hash.match(/join=([A-Z0-9]{6})/i);
+  return m?m[1].toUpperCase():null;
+}
+let pendingJoinCode=getHashJoinCode();
+function handlePendingJoin(){
+  if(!pendingJoinCode)return;
+  const code=pendingJoinCode;pendingJoinCode=null;
+  try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+  gmode='battle';
+  showScreen('multiplayer');
+  setTimeout(()=>{
+    const jbtn=document.getElementById('btn-join-room');
+    if(!jbtn)return;
+    jbtn.click();
+    setTimeout(()=>{
+      const inp=document.getElementById('inp-room-code');
+      if(inp){inp.value=code;const go=document.getElementById('btn-do-join');if(go)go.click();}
+    },100);
+  },100);
+}
+
 // ═══════════════════════════════════════════════════════
 // ACCOUNT — Google Sign-In + custom username
 // ═══════════════════════════════════════════════════════
@@ -2182,12 +2288,194 @@ function signOut(){
   googleUser=null;pname='';clearAccount();showScreen('login',false);
 }
 
+// ── Friend Code (persistent identity for friend requests) ────────
+function genFriendCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s='';for(let i=0;i<5;i++)s+=chars[Math.floor(Math.random()*chars.length)];
+  return 'GX-'+s;
+}
+let myFriendCode=(()=>{
+  let c=null;try{c=localStorage.getItem('gyanx_fcode_v1');}catch(e){}
+  if(!c){c=genFriendCode();try{localStorage.setItem('gyanx_fcode_v1',c);}catch(e){}}
+  return c;
+})();
+
+// ── Toasts (friend requests / invite confirmations) ──────────────
+function showToast(msg,actions){
+  const stack=document.getElementById('gx-toast-stack');
+  if(!stack)return;
+  const t=document.createElement('div');
+  t.className='gx-toast';
+  t.innerHTML=`<div>${msg}</div>`;
+  if(actions&&actions.length){
+    const wrap=document.createElement('div');
+    wrap.className='gx-toast-actions';
+    actions.forEach(a=>{
+      const b=document.createElement('button');
+      b.className='gx-toast-btn'+(a.primary?' primary':'');
+      b.textContent=a.label;
+      b.addEventListener('click',()=>{a.onClick&&a.onClick();t.classList.remove('show');setTimeout(()=>t.remove(),300);});
+      wrap.appendChild(b);
+    });
+    t.appendChild(wrap);
+  }
+  stack.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  if(!actions||!actions.length){
+    setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},4500);
+  }
+}
+function relTime(ts){
+  if(!ts)return'never';
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60)return'just now';
+  if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';
+  if(s<604800)return Math.floor(s/86400)+'d ago';
+  return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
 // ── Friends ──────────────────────────────────────────────
 let friends=(()=>{try{return JSON.parse(localStorage.getItem('gyanx_friends_v1')||'null')||[];}catch(e){return[];}})();
+// Migrate older entries (pre friend-request system) to 'accepted' status
+friends.forEach(f=>{if(!f.status)f.status='accepted';});
 function saveFriends(){localStorage.setItem('gyanx_friends_v1',JSON.stringify(friends));}
-function addFriend(name){if(!name||name===pname||friends.find(f=>f.name===name))return false;friends.push({name,addedAt:Date.now(),gamesPlayed:0,wins:0,lastSeen:null});saveFriends();return true;}
-function removeFriend(name){friends=friends.filter(f=>f.name!==name);saveFriends();}
+// Auto-add (used after playing a battle together — instantly accepted, no request needed)
+function addFriend(name){if(!name||name===pname||friends.find(f=>f.name===name))return false;friends.push({name,code:null,status:'accepted',addedAt:Date.now(),gamesPlayed:0,wins:0,lastSeen:Date.now()});saveFriends();return true;}
+function removeFriend(nameOrCode){friends=friends.filter(f=>f.name!==nameOrCode&&f.code!==nameOrCode);saveFriends();}
 function updateFriendStats(name,win){const f=friends.find(fr=>fr.name===name);if(f){f.gamesPlayed=(f.gamesPlayed||0)+1;if(win)f.wins=(f.wins||0)+1;f.lastSeen=Date.now();saveFriends();}}
+
+// Send an outgoing friend request by friend-code (GX-XXXXX) or by alias name.
+// Since there's no backend, the request is confirmed the moment you and that
+// person actually connect in a multiplayer battle (as host or guest) — the
+// app exchanges friend-codes automatically at that point and flips it to accepted.
+function isFriendCode(v){return /^(GX-)?[A-Z0-9]{5}$/i.test(v.trim());}
+function sendFriendRequest(raw){
+  const v=raw.trim();
+  if(!v)return{ok:false,msg:'Enter a name or friend code.'};
+  if(v.toUpperCase()===myFriendCode.toUpperCase())return{ok:false,msg:"That's your own code!"};
+  if(v===pname)return{ok:false,msg:"That's you!"};
+  const asCode=isFriendCode(v)?(v.toUpperCase().startsWith('GX-')?v.toUpperCase():'GX-'+v.toUpperCase()):null;
+  if(asCode&&friends.find(f=>f.code===asCode))return{ok:false,msg:'Request already sent or already friends.'};
+  if(!asCode&&friends.find(f=>f.name&&f.name.toLowerCase()===v.toLowerCase()))return{ok:false,msg:`${v} is already in your friends list.`};
+  friends.push({
+    name:asCode?null:v,code:asCode,status:'pending_out',
+    addedAt:Date.now(),gamesPlayed:0,wins:0,lastSeen:null
+  });
+  saveFriends();
+  return{ok:true,msg:asCode?`✓ Friend request sent to ${asCode}. It'll confirm once you two connect in a battle.`:`✓ Request sent to ${v}. It'll confirm once you two connect in a battle.`};
+}
+// Called when we learn an opponent's name+code during a multiplayer handshake —
+// resolves any pending outgoing request that matches them.
+function resolvePendingFriend(code,name){
+  if(!code&&!name)return;
+  const f=friends.find(fr=>fr.status==='pending_out'&&(
+    (fr.code&&code&&fr.code.toUpperCase()===code.toUpperCase())||
+    (!fr.code&&fr.name&&name&&fr.name.toLowerCase()===name.toLowerCase())
+  ));
+  if(f){
+    f.status='accepted';f.name=name||f.name;f.code=code||f.code;f.lastSeen=Date.now();
+    saveFriends();
+    showToast(`🤝 Friend request confirmed — you and ${f.name} are now friends!`);
+    if(_curScreen==='friends')showScreen('friends',false);
+  }
+}
+// Called when an opponent explicitly sends a live friend request during a battle.
+function handleIncomingFriendRequest(code,name){
+  let f=friends.find(fr=>fr.code&&code&&fr.code.toUpperCase()===code.toUpperCase());
+  if(f&&f.status==='accepted')return; // already friends
+  if(!f){f={name,code,status:'pending_in',addedAt:Date.now(),gamesPlayed:0,wins:0,lastSeen:Date.now()};friends.push(f);}
+  else{f.status='pending_in';f.name=name;}
+  saveFriends();
+  showToast(`🤝 ${name} wants to be friends!`,[
+    {label:'Accept',primary:true,onClick:()=>{
+      f.status='accepted';f.lastSeen=Date.now();saveFriends();
+      mpSend({type:'friend_accept',code:myFriendCode,name:pname});
+      showToast(`✓ You and ${name} are now friends!`);
+      if(_curScreen==='friends')showScreen('friends',false);
+    }},
+    {label:'Later',onClick:()=>{}}
+  ]);
+}
+function sendLiveFriendRequest(){
+  if(!mpConn||!mpConn.open||!mpOpponentName)return;
+  mpSend({type:'friend_request',code:myFriendCode,name:pname});
+  showToast(`📨 Friend request sent to ${mpOpponentName}.`);
+}
+
+// ── Invite offline/online friends to a battle via a shareable link ───
+function composeInviteText(friendName,roomCode){
+  const url=location.origin+location.pathname+'#join='+roomCode;
+  return `🎮 ${pname} is challenging you to a GYAN X quiz battle!\nRoom code: ${roomCode}\nTap to join → ${url}`;
+}
+function ensureHostRoom(cb,onErr){
+  if(mpPeer&&mpRole==='host'&&mpRoomCode&&mpPeer.open){cb(mpRoomCode);return;}
+  mpCleanup();
+  mpRole='host';mpMode=true;gmode='battle';gdiff=gdiff||'medium';
+  const roomCode=Math.random().toString(36).substring(2,8).toUpperCase();
+  mpRoomCode=roomCode;
+  mpPeer=new Peer(roomCode,{debug:0});
+  mpPeer.on('open',()=>cb(roomCode));
+  mpPeer.on('connection',conn=>{
+    mpConn=conn;
+    conn.on('open',()=>{conn.on('data',d=>mpReceive(d));});
+    conn.on('close',()=>setStatus('❌ Opponent disconnected.'));
+  });
+  mpPeer.on('error',e=>{
+    if(e.type==='unavailable-id'){
+      mpRoomCode=Math.random().toString(36).substring(2,8).toUpperCase();
+      setTimeout(()=>ensureHostRoom(cb,onErr),400);
+    }else if(onErr)onErr(e);
+  });
+}
+function openInviteSheet(friendName){
+  const overlay=document.createElement('div');
+  overlay.className='invite-overlay';
+  overlay.innerHTML=`<div class="invite-modal">
+    <div class="invite-modal-title">📨 Invite ${friendName||'a friend'}</div>
+    <div class="invite-modal-sub" id="inv-sub">Setting up a battle room so you can send them a join link — this works even if they're offline right now. They can open it any time your room stays active.</div>
+    <div class="spinner" id="inv-spinner" style="padding:.5rem 0"><div class="sring" style="width:2.5rem;height:2.5rem"><div class="sr-outer"></div><div class="sr-a spin"></div><div class="sr-b spin-r"></div></div></div>
+    <div id="inv-body" style="display:none;flex-direction:column;gap:.9rem">
+      <textarea class="invite-modal-text" id="inv-text" readonly></textarea>
+      <div class="invite-modal-actions">
+        <button class="friend-btn" id="inv-copy">📋 Copy Message</button>
+        <a class="friend-btn" id="inv-wa" target="_blank" rel="noopener">💬 WhatsApp</a>
+        <a class="friend-btn" id="inv-mail">✉️ Email</a>
+        <button class="friend-btn" id="inv-share" style="display:none">📤 Share...</button>
+      </div>
+    </div>
+    <button class="navlink" id="inv-close" style="text-align:center;justify-content:center">Close</button>
+  </div>`;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(()=>overlay.classList.add('show'));
+  function close(){overlay.classList.remove('show');setTimeout(()=>overlay.remove(),250);}
+  overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
+  overlay.querySelector('#inv-close').addEventListener('click',close);
+  ensureHostRoom(roomCode=>{
+    const text=composeInviteText(friendName,roomCode);
+    overlay.querySelector('#inv-spinner').style.display='none';
+    overlay.querySelector('#inv-sub').textContent=`Room ${roomCode} is live and waiting. Send this join message to ${friendName||'your friend'} — whenever they open it, they'll drop straight into your battle.`;
+    const body=overlay.querySelector('#inv-body');body.style.display='flex';
+    overlay.querySelector('#inv-text').value=text;
+    overlay.querySelector('#inv-wa').href=`https://wa.me/?text=${encodeURIComponent(text)}`;
+    overlay.querySelector('#inv-mail').href=`mailto:?subject=${encodeURIComponent('Join my GYAN X battle')}&body=${encodeURIComponent(text)}`;
+    overlay.querySelector('#inv-copy').addEventListener('click',()=>{
+      navigator.clipboard.writeText(text).catch(()=>{});
+      const b=overlay.querySelector('#inv-copy');const orig=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>{b.textContent=orig;},1500);
+    });
+    if(navigator.share){
+      const shareBtn=overlay.querySelector('#inv-share');
+      shareBtn.style.display='';
+      shareBtn.addEventListener('click',()=>{navigator.share({title:'GYAN X Battle Invite',text}).catch(()=>{});});
+    }
+    // Mark that we invited this friend (if they're a known friend row)
+    const f=friends.find(fr=>fr.name===friendName);
+    if(f){f.lastInvitedAt=Date.now();f.lastInviteCode=roomCode;saveFriends();}
+  },()=>{
+    overlay.querySelector('#inv-spinner').style.display='none';
+    overlay.querySelector('#inv-sub').textContent='Could not create a room right now. Please try again.';
+  });
+}
 
 // ── Game history ─────────────────────────────────────────
 let gameHistory=(()=>{try{return JSON.parse(localStorage.getItem('gyanx_history_v1')||'null')||[];}catch(e){return[];}})();
@@ -2361,6 +2649,7 @@ function screenUsername(el){
     pname=n;apiKey='';
     saveAccount({sub:googleUser.sub,email:googleUser.email,googleName:googleUser.name,picture:googleUser.picture,username:n});
     showScreen('mode');Voice.greet(pname);
+    if(pendingJoinCode)handlePendingJoin();
   }
 }
 
@@ -2587,7 +2876,7 @@ function screenMultiplayer(el){
         conn.on('open',()=>{
           const st=document.getElementById('mp-join-status');
           if(st)st.textContent='Connected! Waiting for host to start...';
-          conn.send(JSON.stringify({type:'hello',name:pname}));
+          conn.send(JSON.stringify({type:'hello',name:pname,code:myFriendCode}));
           conn.on('data',d=>mpReceive(d));
         });
         conn.on('error',()=>{
@@ -2645,38 +2934,115 @@ function screenHistory(el){
 // ═══════════════════════════════════════════════════════
 function screenFriends(el){
   function render(){
+    // Sort: incoming requests first, then pending outgoing, then accepted (by last seen)
+    const order={pending_in:0,pending_out:1,accepted:2};
+    const sorted=friends.map((f,i)=>({f,i})).sort((a,b)=>(order[a.f.status]??2)-(order[b.f.status]??2));
+
     const friendsHtml=friends.length===0
-      ?`<div style="text-align:center;padding:2.5rem 0;color:#334155;font-family:'Space Mono',monospace;font-size:.7rem">No friends yet — play multiplayer to meet people, or add manually.</div>`
-      :friends.map((f,i)=>{
+      ?`<div style="text-align:center;padding:2.5rem 0;color:#334155;font-family:'Space Mono',monospace;font-size:.7rem">No friends yet — play multiplayer to meet people, or send a request by name/code.</div>`
+      :sorted.map(({f,i})=>{
+          const displayName=f.name||f.code||'Unknown';
+          const initial=(f.name||f.code||'?')[0].toUpperCase();
           const wp=f.gamesPlayed>0?Math.round(((f.wins||0)/f.gamesPlayed)*100):0;
-          const last=f.lastSeen?new Date(f.lastSeen).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'never';
-          return `<div class="friend-row"><div style="width:2.25rem;height:2.25rem;min-width:2.25rem;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:800;color:#fff">${f.name[0].toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-family:'Space Mono',monospace;font-size:.75rem;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</div><div style="font-size:.6rem;color:#334155;font-family:'Space Mono',monospace">${f.gamesPlayed||0} games · ${wp}% win · last seen: ${last}</div></div><button class="navlink" data-rmfriend="${i}" style="font-size:.58rem;padding:.2rem .5rem;color:#f87171;border-color:rgba(248,113,113,.18)">✕</button></div>`;
+
+          let statusLine,pillHtml='',rowClass='';
+          if(f.status==='pending_out'){
+            rowClass=' pending';
+            pillHtml=`<span class="friend-status-pill pending">⏳ Pending</span>`;
+            statusLine=`Request sent${f.code?` to ${f.code}`:''} — confirms once you two connect in a battle`;
+          }else if(f.status==='pending_in'){
+            rowClass=' incoming';
+            pillHtml=`<span class="friend-status-pill incoming">🤝 Wants to connect</span>`;
+            statusLine=`Sent you a friend request${f.code?` · ${f.code}`:''}`;
+          }else{
+            statusLine=`${f.gamesPlayed||0} games · ${wp}% win · last seen ${relTime(f.lastSeen)}`;
+            if(f.lastInvitedAt&&Date.now()-f.lastInvitedAt<86400000){
+              statusLine+=` · 📨 invited ${relTime(f.lastInvitedAt)}`;
+            }
+          }
+
+          let actionsHtml='';
+          if(f.status==='pending_in'){
+            actionsHtml=`<button class="friend-btn accept" data-acceptfriend="${i}">✓ Accept</button><button class="friend-btn decline" data-declinefriend="${i}">✕</button>`;
+          }else if(f.status==='pending_out'){
+            actionsHtml=`<button class="friend-btn invite" data-invitefriend="${i}">⚔️ Invite</button><button class="friend-btn danger" data-rmfriend="${i}">✕</button>`;
+          }else{
+            actionsHtml=`<button class="friend-btn invite" data-invitefriend="${i}">⚔️ Invite</button><button class="friend-btn danger" data-rmfriend="${i}">✕</button>`;
+          }
+
+          return `<div class="friend-row${rowClass}">
+            <div class="friend-avatar-wrap">
+              <div style="width:2.25rem;height:2.25rem;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:.8rem;font-weight:800;color:#fff">${initial}</div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+                <span style="font-family:'Space Mono',monospace;font-size:.75rem;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${displayName}</span>
+                ${pillHtml}
+              </div>
+              <div style="font-size:.58rem;color:#334155;font-family:'Space Mono',monospace;margin-top:.1rem">${statusLine}</div>
+            </div>
+            <div style="display:flex;gap:.35rem;flex-shrink:0">${actionsHtml}</div>
+          </div>`;
         }).join('');
-    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:1.25rem;max-width:28rem;margin:0 auto">
-      <div><div class="stitle" style="background:linear-gradient(to right,#34d399,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:1.6rem">👥 Friends</div><div class="ssub">Your squad. Auto-added after battles or add by name.</div></div>
+
+    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:1.25rem;max-width:30rem;margin:0 auto">
+      <div><div class="stitle" style="background:linear-gradient(to right,#34d399,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:1.6rem">👥 Friends</div><div class="ssub">Send requests, invite people to battle, even if they're offline right now.</div></div>
+
+      <div class="fcode-card">
+        <div style="flex:1;min-width:0">
+          <div class="fcode-label">Your Friend Code — share it so others can add you</div>
+          <div class="fcode-val" id="my-fcode" title="Click to copy">${myFriendCode}</div>
+        </div>
+        <button class="friend-btn" id="btn-copy-fcode">📋 Copy</button>
+      </div>
+
       <div style="display:flex;gap:.5rem">
-        <input id="inp-add-friend" class="keyinput" style="flex:1;font-size:.8rem" placeholder="Player alias..." maxlength="24" autocomplete="off"/>
-        <button class="btnoff" id="btn-add-friend" style="padding:.5rem 1.1rem;border-radius:.625rem;font-size:.7rem;white-space:nowrap">Add +</button>
+        <input id="inp-add-friend" class="keyinput" style="flex:1;font-size:.8rem" placeholder="Name or friend code (GX-XXXXX)..." maxlength="24" autocomplete="off"/>
+        <button class="btnoff" id="btn-add-friend" style="padding:.5rem 1.1rem;border-radius:.625rem;font-size:.7rem;white-space:nowrap">Send Request</button>
       </div>
       <div id="friend-msg" style="font-family:'Space Mono',monospace;font-size:.6rem;min-height:.8rem;text-align:center"></div>
       <div style="display:flex;flex-direction:column;gap:.4rem">${friendsHtml}</div>
       <button id="btn-back-friends" style="color:#334155;font-size:.7rem;font-family:'Space Mono',monospace;text-align:left">← Back to modes</button>
     </div>`;
+
     document.getElementById('btn-back-friends').addEventListener('click',()=>showScreen('mode'));
+
+    const copyCode=()=>{
+      navigator.clipboard.writeText(myFriendCode).catch(()=>{});
+      const el2=document.getElementById('my-fcode');const orig=el2.textContent;el2.textContent='COPIED!';
+      setTimeout(()=>{if(el2)el2.textContent=orig;},1200);
+    };
+    document.getElementById('btn-copy-fcode').addEventListener('click',copyCode);
+    document.getElementById('my-fcode').addEventListener('click',copyCode);
+
     const inp=document.getElementById('inp-add-friend');
     const msg=document.getElementById('friend-msg');
     function doAdd(){
       const v=inp.value.trim();
       if(!v)return;
-      const ok=addFriend(v);
-      msg.textContent=ok?`✓ ${v} added to friends!`:(v===pname?`That's you!`:`${v} is already in your friends list.`);
-      msg.style.color=ok?'#34d399':'#f87171';
-      if(ok){inp.value='';setTimeout(render,900);}
+      const res=sendFriendRequest(v);
+      msg.textContent=res.msg;
+      msg.style.color=res.ok?'#34d399':'#f87171';
+      if(res.ok){inp.value='';setTimeout(render,900);}
     }
     document.getElementById('btn-add-friend').addEventListener('click',doAdd);
     inp.addEventListener('keydown',e=>{if(e.key==='Enter')doAdd();});
+
     el.querySelectorAll('[data-rmfriend]').forEach(b=>{
-      b.addEventListener('click',()=>{const i=parseInt(b.dataset.rmfriend);if(friends[i])removeFriend(friends[i].name);render();});
+      b.addEventListener('click',()=>{const i=parseInt(b.dataset.rmfriend);if(friends[i])removeFriend(friends[i].name||friends[i].code);render();});
+    });
+    el.querySelectorAll('[data-invitefriend]').forEach(b=>{
+      b.addEventListener('click',()=>{const i=parseInt(b.dataset.invitefriend);const f=friends[i];if(f)openInviteSheet(f.name||f.code);});
+    });
+    el.querySelectorAll('[data-acceptfriend]').forEach(b=>{
+      b.addEventListener('click',()=>{
+        const i=parseInt(b.dataset.acceptfriend);const f=friends[i];
+        if(f){f.status='accepted';f.lastSeen=Date.now();saveFriends();showToast(`✓ You and ${f.name} are now friends!`);}
+        render();
+      });
+    });
+    el.querySelectorAll('[data-declinefriend]').forEach(b=>{
+      b.addEventListener('click',()=>{const i=parseInt(b.dataset.declinefriend);if(friends[i])removeFriend(friends[i].name||friends[i].code);render();});
     });
   }
   render();
@@ -3160,6 +3526,9 @@ window._muted=false;
 
 <!-- FLOATING ABOUT BUTTON -->
 <button id="about-fab" onclick="toggleAbout()">About Us</button>
+
+<!-- TOAST STACK (friend requests / invites) -->
+<div class="gx-toast-stack" id="gx-toast-stack"></div>
 
 <script>
 // ── About section toggle ──────────────────────────────────
