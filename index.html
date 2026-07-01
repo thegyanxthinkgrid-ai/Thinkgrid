@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Syne:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 /* ─── CSS VARIABLES ─────────────────────────────────────── */
 :root{
@@ -384,6 +385,17 @@ body::after{
   .ab-val-grid{grid-template-columns:1fr}
   .ab-inner{padding:3.5rem 1.25rem}
   #ab-hero{padding:3.5rem 1.25rem 3rem}
+  .ab-founder-card{
+    grid-template-columns:1fr;
+    padding:2rem 1.25rem;
+    text-align:center;
+    gap:1.5rem;
+  }
+  .ab-founder-left{align-items:center}
+  .ab-founder-right{text-align:center}
+  .ab-founder-bio{max-width:100%}
+  .ab-founder-tags{justify-content:center}
+  .ab-founder-name{font-size:1.5rem}
 }
 
 /* ─── CINEMATIC INTRO ───────────────────────────────────── */
@@ -2021,7 +2033,16 @@ function mpReceive(raw){
     setTimeout(()=>{
       intro.style.display='none';
       document.getElementById('app').style.display='flex';
-      renderLB();showScreen('login');Voice.refreshBtn();
+      renderLB();
+      const acc=loadAccount();
+      if(acc&&acc.username){
+        googleUser={sub:acc.sub,email:acc.email,name:acc.googleName,picture:acc.picture};
+        pname=acc.username;
+        showScreen('mode');
+      }else{
+        showScreen('login');
+      }
+      Voice.refreshBtn();
     },650);
   }
 
@@ -2123,6 +2144,44 @@ let tiv=null,ntout=null;
 let mpMode=false;
 let mpQuestionList=[];
 
+// ═══════════════════════════════════════════════════════
+// ACCOUNT — Google Sign-In + custom username
+// ═══════════════════════════════════════════════════════
+// 1. Go to https://console.cloud.google.com/apis/credentials
+// 2. Create an OAuth 2.0 Client ID (type: "Web application")
+// 3. Under "Authorized JavaScript origins" add your live site's URL
+//    (e.g. https://yourdomain.com) — Google Sign-In will NOT work
+//    on file:// or content:// URIs, or on localhost without adding
+//    http://localhost as an origin too.
+// 4. Paste the Client ID below.
+const GOOGLE_CLIENT_ID='1007423755384-3v07pfaoaq16r6mc2dsfdtr6aiv0so40.apps.googleusercontent.com';
+
+let googleUser=null; // {sub,email,name,picture}
+
+function decodeJwt(token){
+  try{
+    const base64=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    const json=decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    return JSON.parse(json);
+  }catch(e){return null;}
+}
+
+function loadAccount(){
+  try{return JSON.parse(localStorage.getItem('gyanx_account_v1')||'null');}catch(e){return null;}
+}
+function saveAccount(acc){try{localStorage.setItem('gyanx_account_v1',JSON.stringify(acc));}catch(e){}}
+function clearAccount(){try{localStorage.removeItem('gyanx_account_v1');}catch(e){}}
+
+function suggestUsername(profile){
+  const base=(profile.name||profile.email.split('@')[0]||'Player').replace(/[^a-zA-Z0-9]/g,'');
+  return base.slice(0,16)||'Player'+Math.floor(Math.random()*9000+1000);
+}
+
+function signOut(){
+  try{if(window.google&&google.accounts&&google.accounts.id)google.accounts.id.disableAutoSelect();}catch(e){}
+  googleUser=null;pname='';clearAccount();showScreen('login',false);
+}
+
 // ── Friends ──────────────────────────────────────────────
 let friends=(()=>{try{return JSON.parse(localStorage.getItem('gyanx_friends_v1')||'null')||[];}catch(e){return[];}})();
 function saveFriends(){localStorage.setItem('gyanx_friends_v1',JSON.stringify(friends));}
@@ -2138,7 +2197,7 @@ let histPushed=false;
 
 // ── Screen navigation history ─────────────────────────
 let navHistory=[];let _curScreen='';
-const _SKIP_PUSH=new Set(['login','quiz','result']);
+const _SKIP_PUSH=new Set(['login','username','quiz','result']);
 function _updateBackBtn(){
   const btn=document.getElementById('global-back-btn');
   if(!btn)return;
@@ -2216,6 +2275,7 @@ function showScreen(s,pushNav=true){
   _curScreen=s;
   _updateBackBtn();
   if(s==='login')screenLogin(el);
+  else if(s==='username')screenUsername(el);
   else if(s==='mode')screenMode(el);
   else if(s==='difficulty')screenDifficulty(el);
   else if(s==='staging')screenStaging(el);
@@ -2229,20 +2289,78 @@ function showScreen(s,pushNav=true){
 // LOGIN
 function screenLogin(el){
   el.innerHTML=`<div style="max-width:26rem;display:flex;flex-direction:column;gap:1.5rem">
-    <div><div class="ltitle">Initiate Node</div><div class="lsub">Register your alias to enter the cognitive arena.</div></div>
-    <div style="display:flex;flex-direction:column;gap:.75rem">
-      <div style="position:relative"><span class="iprefix">⚡</span><input class="tinput" id="inp-name" type="text" placeholder="Node alias..." autocomplete="off" /></div>
-      <div id="err" class="errmsg" style="display:none"></div>
-      <button class="btnprimary" id="btn-reg">Launch Session →</button>
+    <div><div class="ltitle">Initiate Node</div><div class="lsub">Sign in with Google to enter the cognitive arena.</div></div>
+    <div style="display:flex;flex-direction:column;gap:.75rem;align-items:center">
+      <div id="g_id_signin"></div>
+      <div id="g-fallback-msg" class="errmsg" style="display:none;text-align:center"></div>
     </div>
   </div>`;
-  const nameI=document.getElementById('inp-name');
+  const fallback=document.getElementById('g-fallback-msg');
+  let attempts=0;
+  const maxAttempts=25; // ~5s at 200ms intervals
+  (function waitForGoogle(){
+    if(window.google&&google.accounts&&google.accounts.id){
+      initGoogleButton(fallback);
+      return;
+    }
+    attempts++;
+    if(attempts>=maxAttempts){
+      fallback.style.display='block';
+      fallback.textContent='Google Sign-In failed to load. This can happen if the page is opened outside a real hosted domain (e.g. a preview/sandbox), or if your connection blocks accounts.google.com. Check your connection and reload on your live site.';
+      return;
+    }
+    setTimeout(waitForGoogle,200);
+  })();
+}
+
+function initGoogleButton(fallback){
+  if(GOOGLE_CLIENT_ID==='YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'){
+    fallback.style.display='block';
+    fallback.textContent='⚠ Google Sign-In is not configured yet — add your OAuth Client ID in the code (search GOOGLE_CLIENT_ID).';
+  }
+  try{
+    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleGoogleCredential,auto_select:false});
+    google.accounts.id.renderButton(document.getElementById('g_id_signin'),{theme:'filled_black',size:'large',shape:'pill',width:300,text:'signin_with'});
+  }catch(e){
+    fallback.style.display='block';
+    fallback.textContent='Google Sign-In could not initialize on this origin. It only works on a hosted https:// domain registered as an authorized origin in Google Cloud Console.';
+  }
+}
+
+function handleGoogleCredential(response){
+  const profile=decodeJwt(response.credential);
+  if(!profile){return;}
+  googleUser={sub:profile.sub,email:profile.email,name:profile.name,picture:profile.picture};
+  showScreen('username',false);
+}
+
+// USERNAME (after Google sign-in)
+function screenUsername(el){
+  const suggested=suggestUsername(googleUser||{name:'',email:''});
+  el.innerHTML=`<div style="max-width:26rem;display:flex;flex-direction:column;gap:1.5rem">
+    <div style="display:flex;align-items:center;gap:.75rem">
+      ${googleUser&&googleUser.picture?`<img src="${googleUser.picture}" alt="" style="width:2.75rem;height:2.75rem;border-radius:50%;border:1px solid var(--border2)" referrerpolicy="no-referrer"/>`:''}
+      <div><div class="ltitle" style="margin-bottom:.15rem">Choose a Username</div><div class="lsub">Signed in as ${googleUser?googleUser.email:''}</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.75rem">
+      <div style="position:relative"><span class="iprefix">⚡</span><input class="tinput" id="inp-uname" type="text" placeholder="Pick a username..." autocomplete="off" maxlength="16" value="${suggested}"/></div>
+      <div id="err" class="errmsg" style="display:none"></div>
+      <button class="btnprimary" id="btn-uname-go">Launch Session →</button>
+      <button class="navlink" id="btn-switch-account">Use a different Google account</button>
+    </div>
+  </div>`;
+  const nameI=document.getElementById('inp-uname');
+  nameI.focus();nameI.select();
   nameI.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
-  document.getElementById('btn-reg').addEventListener('click',go);
+  document.getElementById('btn-uname-go').addEventListener('click',go);
+  document.getElementById('btn-switch-account').addEventListener('click',()=>{googleUser=null;showScreen('login',false);});
   function go(){
     const n=nameI.value.trim();
-    if(!n){document.getElementById('err').textContent='Node alias required.';document.getElementById('err').style.display='block';return;}
-    pname=n;apiKey='';showScreen('mode');Voice.greet(pname);
+    if(!n){document.getElementById('err').textContent='Username required.';document.getElementById('err').style.display='block';return;}
+    if(n.length<3){document.getElementById('err').textContent='Username must be at least 3 characters.';document.getElementById('err').style.display='block';return;}
+    pname=n;apiKey='';
+    saveAccount({sub:googleUser.sub,email:googleUser.email,googleName:googleUser.name,picture:googleUser.picture,username:n});
+    showScreen('mode');Voice.greet(pname);
   }
 }
 
@@ -2255,7 +2373,13 @@ function screenMode(el){
     {id:'battle',icon:'⚔️',label:'Multiplayer',c:'#a78bfa',bg:'#8b5cf6',desc:'Challenge a friend in real-time. Share a room code to connect.'},
   ];
   el.innerHTML=`<div style="display:flex;flex-direction:column;gap:1rem">
-    <div><div class="stitle">Select Mode</div><div class="ssub">Choose your combat profile.</div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap">
+      <div><div class="stitle">Select Mode</div><div class="ssub">Choose your combat profile.</div></div>
+      <button id="btn-profile-chip" style="display:flex;align-items:center;gap:.5rem;background:var(--glass);border:1px solid var(--border);border-radius:999px;padding:.35rem .75rem .35rem .35rem;cursor:pointer;color:var(--text1);font-family:var(--font-mono);font-size:.7rem">
+        ${googleUser&&googleUser.picture?`<img src="${googleUser.picture}" alt="" style="width:1.6rem;height:1.6rem;border-radius:50%" referrerpolicy="no-referrer"/>`:'<span>👤</span>'}
+        <span>${pname}</span>
+      </button>
+    </div>
     <div class="modegrid">${modes.map(m=>`
       <button class="modecard" id="mc-${m.id}" style="--card-glow:${m.bg}22;--card-shadow:0 0 30px ${m.bg}22">
         <div class="corner" style="background:${m.bg}"></div>
@@ -2268,6 +2392,9 @@ function screenMode(el){
       <button class="navlink" id="btn-nav-friends">👥 Friends${friends.length>0?` (${friends.length})`:''}</button>
     </div>
   </div>`;
+  document.getElementById('btn-profile-chip').addEventListener('click',()=>{
+    if(confirm('Sign out of '+pname+'?'))signOut();
+  });
   modes.forEach(m=>{
     document.getElementById('mc-'+m.id).addEventListener('mouseenter',()=>snd.hover());
     document.getElementById('mc-'+m.id).addEventListener('click',()=>{
