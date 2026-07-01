@@ -1187,28 +1187,6 @@ body::after{
 }
 .gx-toast-btn.primary{border-color:rgba(52,211,153,.35);color:#34d399}
 
-/* ─── INVITE SHEET ───────────────────────────────────────── */
-.invite-overlay{
-  position:fixed;inset:0;z-index:9998;background:rgba(2,4,10,.72);backdrop-filter:blur(4px);
-  display:flex;align-items:center;justify-content:center;padding:1.25rem;opacity:0;transition:opacity .25s;
-}
-.invite-overlay.show{opacity:1}
-.invite-modal{
-  width:100%;max-width:24rem;background:linear-gradient(145deg,var(--bg4),var(--bg3));
-  border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.5rem;
-  display:flex;flex-direction:column;gap:.9rem;box-shadow:0 20px 60px rgba(0,0,0,.5);
-  transform:scale(.94);transition:transform .25s;
-}
-.invite-overlay.show .invite-modal{transform:scale(1)}
-.invite-modal-title{font-family:var(--font-display);font-weight:800;font-size:1.05rem;color:var(--text1)}
-.invite-modal-sub{font-size:.68rem;color:var(--text2);line-height:1.55}
-.invite-modal-text{
-  width:100%;min-height:5rem;resize:none;background:rgba(0,0,0,.3);border:1px solid var(--border2);
-  border-radius:var(--radius-sm);padding:.65rem;color:var(--text1);font-family:var(--font-mono);font-size:.68rem;line-height:1.5;
-}
-.invite-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
-.invite-modal-actions a,.invite-modal-actions button{text-align:center;justify-content:center;text-decoration:none}
-
 .hist-row{
   display:flex;align-items:center;gap:.75rem;padding:.7rem .875rem;
   border-radius:var(--radius);border:1px solid var(--border);
@@ -1941,7 +1919,7 @@ function setStatus(m){const el=document.getElementById('status-txt');if(el)el.te
 // ═══════════════════════════════════════════════════════
 let mpPeer=null,mpConn=null,mpRole='',mpRoomCode='';
 let mpPlayers={};  // name -> score
-let mpOpponentName='',mpOpponentScore=0;
+let mpOpponentName='',mpOpponentScore=0,mpOpponentCode='';
 let mpGameStarted=false;
 let mpCurrentQIndex=0,mpQuestions=[];
 
@@ -1949,7 +1927,7 @@ function mpCleanup(){
   if(mpConn){try{mpConn.close();}catch(e){}}
   if(mpPeer){try{mpPeer.destroy();}catch(e){}}
   mpPeer=null;mpConn=null;mpRole='';mpRoomCode='';
-  mpPlayers={};mpOpponentName='';mpOpponentScore=0;
+  mpPlayers={};mpOpponentName='';mpOpponentScore=0;mpOpponentCode='';
   mpGameStarted=false;mpCurrentQIndex=0;mpQuestions=[];
   document.getElementById('mp-sidebar').style.display='none';
   document.getElementById('sc-opponent').style.display='none';
@@ -1995,6 +1973,7 @@ function mpReceive(raw){
   try{msg=JSON.parse(raw);}catch(e){return;}
   if(msg.type==='hello'){
     mpOpponentName=msg.name;
+    mpOpponentCode=msg.code||'';
     snd.mp_join();
     setStatus(`🎮 ${mpOpponentName} joined the battle!`);
     mpPlayers[mpOpponentName]=0;
@@ -2013,6 +1992,7 @@ function mpReceive(raw){
     }
   } else if(msg.type==='game_start'){
     mpOpponentName=msg.playerName;
+    mpOpponentCode=msg.code||'';
     gmode=msg.mode;gdiff=msg.diff;
     mpQuestions=msg.questions;
     mpGameStarted=true;
@@ -2121,6 +2101,7 @@ function mpReceive(raw){
         googleUser={sub:acc.sub,email:acc.email,name:acc.googleName,picture:acc.picture};
         pname=acc.username;
         showScreen('mode');
+        startNtfyListener();
         if(pendingJoinCode)handlePendingJoin();
       }else{
         showScreen('login');
@@ -2341,7 +2322,7 @@ let friends=(()=>{try{return JSON.parse(localStorage.getItem('gyanx_friends_v1')
 friends.forEach(f=>{if(!f.status)f.status='accepted';});
 function saveFriends(){localStorage.setItem('gyanx_friends_v1',JSON.stringify(friends));}
 // Auto-add (used after playing a battle together — instantly accepted, no request needed)
-function addFriend(name){if(!name||name===pname||friends.find(f=>f.name===name))return false;friends.push({name,code:null,status:'accepted',addedAt:Date.now(),gamesPlayed:0,wins:0,lastSeen:Date.now()});saveFriends();return true;}
+function addFriend(name,code){if(!name||name===pname||friends.find(f=>f.name===name))return false;friends.push({name,code:code||null,status:'accepted',addedAt:Date.now(),gamesPlayed:0,wins:0,lastSeen:Date.now()});saveFriends();return true;}
 function removeFriend(nameOrCode){friends=friends.filter(f=>f.name!==nameOrCode&&f.code!==nameOrCode);saveFriends();}
 function updateFriendStats(name,win){const f=friends.find(fr=>fr.name===name);if(f){f.gamesPlayed=(f.gamesPlayed||0)+1;if(win)f.wins=(f.wins||0)+1;f.lastSeen=Date.now();saveFriends();}}
 
@@ -2403,11 +2384,63 @@ function sendLiveFriendRequest(){
   showToast(`📨 Friend request sent to ${mpOpponentName}.`);
 }
 
-// ── Invite offline/online friends to a battle via a shareable link ───
-function composeInviteText(friendName,roomCode){
-  const url=location.origin+location.pathname+'#join='+roomCode;
-  return `🎮 ${pname} is challenging you to a GYAN X quiz battle!\nRoom code: ${roomCode}\nTap to join → ${url}`;
+// ── GYAN X Notifications ───────────────────────────────────────
+// Real push delivery between two browsers with no backend of our own:
+// we use ntfy.sh, a free public pub/sub relay, called directly from the
+// browser. Each player listens on a topic derived from their own friend
+// code. Sending an invite POSTs a message to the friend's topic; if their
+// browser is open (foreground or background) they get an in-app toast and,
+// if they've granted permission, a native OS notification — both with a
+// "Join Now" action that jumps straight into the room via the same
+// #join=CODE deep link used for shared links. A fully closed browser can't
+// be woken up this way (that would need a real backend + Web Push), but
+// this covers "their tab is open somewhere" reliably.
+const NTFY_BASE='https://ntfy.sh';
+function ntfyTopic(code){return 'gyanx-inv-'+String(code).replace(/[^A-Z0-9]/gi,'').toUpperCase();}
+async function sendGyanXNotification(code,title,body,clickUrl){
+  if(!code)return false;
+  try{
+    await fetch(`${NTFY_BASE}/${ntfyTopic(code)}`,{
+      method:'POST',
+      headers:{'Title':title,'Click':clickUrl,'Tags':'video_game'},
+      body:body
+    });
+    return true;
+  }catch(e){return false;}
 }
+let _ntfyES=null;
+function startNtfyListener(){
+  if(_ntfyES||!myFriendCode)return;
+  try{
+    _ntfyES=new EventSource(`${NTFY_BASE}/${ntfyTopic(myFriendCode)}/sse`);
+    _ntfyES.onmessage=(e)=>{
+      let data;try{data=JSON.parse(e.data);}catch(err){return;}
+      if(data.event!=='message')return;
+      handleIncomingNotification(data);
+    };
+  }catch(e){}
+}
+function handleIncomingNotification(data){
+  const title=data.title||'GYAN X';
+  const body=data.message||'';
+  const clickUrl=data.click||'';
+  function joinNow(){
+    const m=clickUrl.match(/join=([A-Z0-9]{6})/i);
+    if(m){pendingJoinCode=m[1].toUpperCase();handlePendingJoin();}
+  }
+  showToast(`🔔 <b>${title}</b><br>${body}`,[
+    {label:'Join Now',primary:true,onClick:joinNow},
+    {label:'Dismiss',onClick:()=>{}}
+  ]);
+  if(window.Notification&&Notification.permission==='granted'){
+    try{
+      const n=new Notification(title,{body});
+      n.onclick=()=>{window.focus();joinNow();n.close();};
+    }catch(e){}
+  }
+}
+
+// ── Invite an accepted friend to a battle (sends a direct GYAN X notification) ─
 function ensureHostRoom(cb,onErr){
   if(mpPeer&&mpRole==='host'&&mpRoomCode&&mpPeer.open){cb(mpRoomCode);return;}
   mpCleanup();
@@ -2428,53 +2461,16 @@ function ensureHostRoom(cb,onErr){
     }else if(onErr)onErr(e);
   });
 }
-function openInviteSheet(friendName){
-  const overlay=document.createElement('div');
-  overlay.className='invite-overlay';
-  overlay.innerHTML=`<div class="invite-modal">
-    <div class="invite-modal-title">📨 Invite ${friendName||'a friend'}</div>
-    <div class="invite-modal-sub" id="inv-sub">Setting up a battle room so you can send them a join link — this works even if they're offline right now. They can open it any time your room stays active.</div>
-    <div class="spinner" id="inv-spinner" style="padding:.5rem 0"><div class="sring" style="width:2.5rem;height:2.5rem"><div class="sr-outer"></div><div class="sr-a spin"></div><div class="sr-b spin-r"></div></div></div>
-    <div id="inv-body" style="display:none;flex-direction:column;gap:.9rem">
-      <textarea class="invite-modal-text" id="inv-text" readonly></textarea>
-      <div class="invite-modal-actions">
-        <button class="friend-btn" id="inv-copy">📋 Copy Message</button>
-        <a class="friend-btn" id="inv-wa" target="_blank" rel="noopener">💬 WhatsApp</a>
-        <a class="friend-btn" id="inv-mail">✉️ Email</a>
-        <button class="friend-btn" id="inv-share" style="display:none">📤 Share...</button>
-      </div>
-    </div>
-    <button class="navlink" id="inv-close" style="text-align:center;justify-content:center">Close</button>
-  </div>`;
-  document.body.appendChild(overlay);
-  requestAnimationFrame(()=>overlay.classList.add('show'));
-  function close(){overlay.classList.remove('show');setTimeout(()=>overlay.remove(),250);}
-  overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
-  overlay.querySelector('#inv-close').addEventListener('click',close);
-  ensureHostRoom(roomCode=>{
-    const text=composeInviteText(friendName,roomCode);
-    overlay.querySelector('#inv-spinner').style.display='none';
-    overlay.querySelector('#inv-sub').textContent=`Room ${roomCode} is live and waiting. Send this join message to ${friendName||'your friend'} — whenever they open it, they'll drop straight into your battle.`;
-    const body=overlay.querySelector('#inv-body');body.style.display='flex';
-    overlay.querySelector('#inv-text').value=text;
-    overlay.querySelector('#inv-wa').href=`https://wa.me/?text=${encodeURIComponent(text)}`;
-    overlay.querySelector('#inv-mail').href=`mailto:?subject=${encodeURIComponent('Join my GYAN X battle')}&body=${encodeURIComponent(text)}`;
-    overlay.querySelector('#inv-copy').addEventListener('click',()=>{
-      navigator.clipboard.writeText(text).catch(()=>{});
-      const b=overlay.querySelector('#inv-copy');const orig=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>{b.textContent=orig;},1500);
-    });
-    if(navigator.share){
-      const shareBtn=overlay.querySelector('#inv-share');
-      shareBtn.style.display='';
-      shareBtn.addEventListener('click',()=>{navigator.share({title:'GYAN X Battle Invite',text}).catch(()=>{});});
-    }
-    // Mark that we invited this friend (if they're a known friend row)
+function inviteFriend(friendName,friendCode){
+  if(!friendCode){showToast(`⚠️ Can't notify ${friendName} yet — play one battle together first to link your codes.`);return;}
+  showToast(`📡 Setting up a room and notifying ${friendName}...`);
+  ensureHostRoom(async roomCode=>{
+    const joinUrl=location.origin+location.pathname+'#join='+roomCode;
+    const ok=await sendGyanXNotification(friendCode,`⚔️ ${pname} challenged you to a battle!`,`Room ${roomCode} — tap to jump straight in.`,joinUrl);
+    showToast(ok?`✓ Invite notification sent to ${friendName}!`:`⚠️ Couldn't reach the notification relay. Room ${roomCode} is still live if you can reach them another way.`);
     const f=friends.find(fr=>fr.name===friendName);
     if(f){f.lastInvitedAt=Date.now();f.lastInviteCode=roomCode;saveFriends();}
-  },()=>{
-    overlay.querySelector('#inv-spinner').style.display='none';
-    overlay.querySelector('#inv-sub').textContent='Could not create a room right now. Please try again.';
-  });
+  },()=>{showToast('❌ Could not create a battle room. Please try again.');});
 }
 
 // ── Game history ─────────────────────────────────────────
@@ -2649,6 +2645,7 @@ function screenUsername(el){
     pname=n;apiKey='';
     saveAccount({sub:googleUser.sub,email:googleUser.email,googleName:googleUser.name,picture:googleUser.picture,username:n});
     showScreen('mode');Voice.greet(pname);
+    startNtfyListener();
     if(pendingJoinCode)handlePendingJoin();
   }
 }
@@ -2965,9 +2962,11 @@ function screenFriends(el){
           if(f.status==='pending_in'){
             actionsHtml=`<button class="friend-btn accept" data-acceptfriend="${i}">✓ Accept</button><button class="friend-btn decline" data-declinefriend="${i}">✕</button>`;
           }else if(f.status==='pending_out'){
+            actionsHtml=`<button class="friend-btn danger" data-rmfriend="${i}">Cancel</button>`;
+          }else if(f.code){
             actionsHtml=`<button class="friend-btn invite" data-invitefriend="${i}">⚔️ Invite</button><button class="friend-btn danger" data-rmfriend="${i}">✕</button>`;
           }else{
-            actionsHtml=`<button class="friend-btn invite" data-invitefriend="${i}">⚔️ Invite</button><button class="friend-btn danger" data-rmfriend="${i}">✕</button>`;
+            actionsHtml=`<button class="friend-btn" disabled title="Play one battle together to link notifications" style="opacity:.35;cursor:not-allowed">⚔️ Invite</button><button class="friend-btn danger" data-rmfriend="${i}">✕</button>`;
           }
 
           return `<div class="friend-row${rowClass}">
@@ -2986,7 +2985,9 @@ function screenFriends(el){
         }).join('');
 
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:1.25rem;max-width:30rem;margin:0 auto">
-      <div><div class="stitle" style="background:linear-gradient(to right,#34d399,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:1.6rem">👥 Friends</div><div class="ssub">Send requests, invite people to battle, even if they're offline right now.</div></div>
+      <div><div class="stitle" style="background:linear-gradient(to right,#34d399,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:1.6rem">👥 Friends</div><div class="ssub">Send a request — once they accept, GYAN X notifies them directly when you invite them to battle.</div></div>
+
+      ${(window.Notification&&Notification.permission==='default')?`<button class="friend-btn" id="btn-enable-notif" style="align-self:flex-start">🔔 Enable Battle Invite Notifications</button>`:''}
 
       <div class="fcode-card">
         <div style="flex:1;min-width:0">
@@ -3006,6 +3007,10 @@ function screenFriends(el){
     </div>`;
 
     document.getElementById('btn-back-friends').addEventListener('click',()=>showScreen('mode'));
+    const notifBtn=document.getElementById('btn-enable-notif');
+    if(notifBtn)notifBtn.addEventListener('click',()=>{
+      Notification.requestPermission().then(()=>{startNtfyListener();render();});
+    });
 
     const copyCode=()=>{
       navigator.clipboard.writeText(myFriendCode).catch(()=>{});
@@ -3032,7 +3037,7 @@ function screenFriends(el){
       b.addEventListener('click',()=>{const i=parseInt(b.dataset.rmfriend);if(friends[i])removeFriend(friends[i].name||friends[i].code);render();});
     });
     el.querySelectorAll('[data-invitefriend]').forEach(b=>{
-      b.addEventListener('click',()=>{const i=parseInt(b.dataset.invitefriend);const f=friends[i];if(f)openInviteSheet(f.name||f.code);});
+      b.addEventListener('click',()=>{const i=parseInt(b.dataset.invitefriend);const f=friends[i];if(f)inviteFriend(f.name,f.code);});
     });
     el.querySelectorAll('[data-acceptfriend]').forEach(b=>{
       b.addEventListener('click',()=>{
@@ -3127,7 +3132,12 @@ function screenResult(el){
     if(mpMode&&mpOpponentName){
       updateFriendStats(mpOpponentName,score>mpOpponentScore);
       // Auto-add opponent as friend if not already
-      addFriend(mpOpponentName);
+      addFriend(mpOpponentName,mpOpponentCode);
+      // Backfill their friend-code if we learned it this session (older records may lack it)
+      if(mpOpponentCode){
+        const existing=friends.find(f=>f.name===mpOpponentName);
+        if(existing&&!existing.code){existing.code=mpOpponentCode;saveFriends();}
+      }
     }
   }
   const g=score>=500?{l:'LEGENDARY',c:'#fcd34d',glow:'rgba(245,158,11,.35)'}:score>=300?{l:'CHAMPION',c:'#a78bfa',glow:'rgba(167,139,250,.35)'}:score>=150?{l:'EXPERT',c:'#22d3ee',glow:'rgba(6,182,212,.35)'}:score>=60?{l:'PROFICIENT',c:'#34d399',glow:'rgba(16,185,129,.35)'}:{l:'INITIATE',c:'#94a3b8',glow:'rgba(148,163,184,.15)'};
