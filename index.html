@@ -700,6 +700,12 @@ body::after{
   overflow-y:auto;backdrop-filter:blur(12px)
 }
 @media(max-width:900px){.sidebar{display:none}}
+@media(max-width:640px){
+  .maincol{padding:1.1rem .85rem}
+}
+@media(max-width:480px){
+  .maincol{padding:.9rem .6rem}
+}
 
 /* ─── HEADER ────────────────────────────────────────────── */
 .htitle{
@@ -756,6 +762,12 @@ body::after{
 #content::before{
   content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent,rgba(0,229,255,.2),rgba(124,58,237,.15),transparent)
+}
+@media(max-width:640px){
+  #content{padding:1.35rem 1rem;border-radius:var(--radius-lg);min-height:auto}
+}
+@media(max-width:400px){
+  #content{padding:1.1rem .75rem}
 }
 
 /* ─── LOGIN SCREEN ──────────────────────────────────────── */
@@ -947,6 +959,10 @@ body::after{
 }
 .ansgrid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.25rem}
 @media(max-width:600px){.ansgrid{grid-template-columns:1fr}}
+@media(max-width:400px){
+  .btnai,.btnoff{min-width:0;padding:.85rem .75rem}
+  .mp-create-join-grid{grid-template-columns:1fr}
+}
 
 .ansbtn{
   padding:1.05rem 1.15rem;border-radius:var(--radius);text-align:left;
@@ -1078,26 +1094,28 @@ body::after{
   padding:1.25rem;display:flex;flex-direction:column;gap:.875rem
 }
 .mp-code{
-  font-family:var(--font-mono);font-size:2rem;font-weight:700;color:var(--purple);
-  letter-spacing:.4em;text-align:center;padding:.875rem;
+  font-family:var(--font-mono);font-size:clamp(1.3rem,7vw,2rem);font-weight:700;color:var(--purple);
+  letter-spacing:clamp(.18em,3vw,.4em);text-align:center;padding:.875rem .5rem;
   background:rgba(0,0,0,.3);border-radius:var(--radius);
   border:1px solid rgba(167,139,250,.2);
   box-shadow:0 0 30px rgba(124,58,237,.1);cursor:pointer;
-  transition:all .2s
+  transition:all .2s;word-break:break-all
 }
 .mp-code:hover{letter-spacing:.45em;box-shadow:0 0 45px rgba(124,58,237,.2)}
+@media(max-width:400px){.mp-code:hover{letter-spacing:clamp(.18em,3vw,.4em)}}
+.mp-players-row{display:flex;gap:.5rem;flex-wrap:wrap}
 .mp-player{
-  display:flex;align-items:center;gap:.75rem;padding:.65rem .875rem;
+  display:flex;align-items:center;gap:.6rem;padding:.65rem .875rem;
   border-radius:var(--radius);background:rgba(255,255,255,.025);
-  border:1px solid var(--border)
+  border:1px solid var(--border);flex:1 1 9rem;min-width:0
 }
-.mp-pip{width:.5rem;height:.5rem;border-radius:50%}
+.mp-pip{width:.5rem;height:.5rem;border-radius:50%;flex-shrink:0}
 .mp-pip.online{background:var(--emerald);animation:pulse 2s infinite}
 .mp-pip.ready{background:var(--amber)}
 .mp-pip.waiting{background:var(--text3)}
-.mp-pname{flex:1;font-family:var(--font-mono);font-size:.75rem;font-weight:700;color:var(--text1)}
+.mp-pname{flex:1;font-family:var(--font-mono);font-size:.75rem;font-weight:700;color:var(--text1);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mp-pscore{font-family:var(--font-mono);font-size:.8rem;font-weight:800;color:var(--cyan)}
-.mp-tag{font-size:.52rem;font-family:var(--font-mono);padding:.15rem .45rem;border-radius:.3rem}
+.mp-tag{font-size:.52rem;font-family:var(--font-mono);padding:.15rem .45rem;border-radius:.3rem;flex-shrink:0;white-space:nowrap}
 .mp-tag.host{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.18);color:var(--amber)}
 .mp-tag.you{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34d399}
 .mp-winner{font-size:1.15rem;font-weight:800;font-family:var(--font-display);letter-spacing:.06em}
@@ -1134,7 +1152,7 @@ body::after{
 .friend-row{
   display:flex;align-items:center;gap:.625rem;padding:.7rem .875rem;
   border-radius:var(--radius);background:rgba(255,255,255,.02);
-  border:1px solid var(--border);transition:all .2s
+  border:1px solid var(--border);transition:all .2s;flex-wrap:wrap
 }
 .friend-row:hover{background:rgba(255,255,255,.04);border-color:var(--border2);transform:translateX(2px)}
 .friend-row.pending{border-color:rgba(251,191,36,.18);background:rgba(251,191,36,.03)}
@@ -1163,13 +1181,28 @@ body::after{
 .fcode-card{
   display:flex;align-items:center;gap:.75rem;padding:.8rem 1rem;border-radius:var(--radius);
   background:linear-gradient(135deg,rgba(0,229,255,.05),rgba(124,58,237,.05));
-  border:1px solid rgba(0,229,255,.15);
+  border:1px solid rgba(0,229,255,.15);flex-wrap:wrap
 }
 .fcode-val{
   font-family:var(--font-mono);font-weight:800;font-size:1rem;letter-spacing:.15em;color:var(--cyan);
-  cursor:pointer;flex:1;
+  cursor:pointer;flex:1;min-width:9rem;word-break:break-all
 }
 .fcode-label{font-size:.55rem;font-family:var(--font-mono);letter-spacing:.15em;color:var(--text3);text-transform:uppercase}
+.friend-tabs{display:flex;gap:.4rem;border-bottom:1px solid var(--border);padding-bottom:.1rem}
+.friend-tab{
+  position:relative;padding:.5rem .9rem;font-family:var(--font-mono);font-size:.66rem;font-weight:700;
+  color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap
+}
+.friend-tab:hover{color:var(--text2)}
+.friend-tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.ftab-dot{display:inline-block;width:.4rem;height:.4rem;border-radius:50%;background:#ef4444;margin-left:.3rem;vertical-align:middle;animation:pulse 2s ease-in-out infinite}
+@media(max-width:420px){
+  .friend-tabs{gap:.15rem}
+  .friend-tab{padding:.5rem .6rem;font-size:.62rem;flex:1;text-align:center}
+}
+@media(max-width:420px){
+  .friend-actions{width:100%;justify-content:flex-end}
+}
 
 /* ─── TOASTS ─────────────────────────────────────────────── */
 .gx-toast-stack{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.6rem;max-width:20rem}
@@ -2202,6 +2235,7 @@ function mpReceive(raw){
 // STATE
 // ═══════════════════════════════════════════════════════
 let pname='',gmode='',gsrc='local',gdiff='medium';
+let isGuest=false;
 let score=0,timeLeft=null,qcount=0,streak=0;
 let active=false,tpause=false,curQ=null;
 let tiv=null,ntout=null;
@@ -2216,6 +2250,7 @@ function getHashJoinCode(){
 let pendingJoinCode=getHashJoinCode();
 function handlePendingJoin(){
   if(!pendingJoinCode)return;
+  if(isGuest)return; // guests can't join multiplayer; code stays pending until they sign in
   const code=pendingJoinCode;pendingJoinCode=null;
   try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
   gmode='battle';
@@ -2266,7 +2301,7 @@ function suggestUsername(profile){
 
 function signOut(){
   try{if(window.google&&google.accounts&&google.accounts.id)google.accounts.id.disableAutoSelect();}catch(e){}
-  googleUser=null;pname='';clearAccount();showScreen('login',false);
+  googleUser=null;pname='';isGuest=false;clearAccount();showScreen('login',false);
 }
 
 // ── Friend Code (persistent identity for friend requests) ────────
@@ -2481,7 +2516,7 @@ let histPushed=false;
 
 // ── Screen navigation history ─────────────────────────
 let navHistory=[];let _curScreen='';
-const _SKIP_PUSH=new Set(['login','username','quiz','result']);
+const _SKIP_PUSH=new Set(['login','username','guestname','quiz','result']);
 function _updateBackBtn(){
   const btn=document.getElementById('global-back-btn');
   if(!btn)return;
@@ -2560,6 +2595,7 @@ function showScreen(s,pushNav=true){
   _updateBackBtn();
   if(s==='login')screenLogin(el);
   else if(s==='username')screenUsername(el);
+  else if(s==='guestname')screenGuestName(el);
   else if(s==='mode')screenMode(el);
   else if(s==='difficulty')screenDifficulty(el);
   else if(s==='staging')screenStaging(el);
@@ -2570,6 +2606,19 @@ function showScreen(s,pushNav=true){
   else if(s==='friends')screenFriends(el);
 }
 
+// Shown in place of Friends/Multiplayer for guest sessions
+function renderGuestGate(el,feature,msg){
+  el.innerHTML=`<div style="max-width:26rem;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem;text-align:center;padding-top:1rem">
+    <div style="font-size:2.5rem">🔒</div>
+    <div class="stitle">${feature} is for signed-in players</div>
+    <div class="ssub">${msg}</div>
+    <button class="btnprimary" id="btn-guest-gate-signin">Sign in with Google</button>
+    <button class="navlink" id="btn-guest-gate-back">← Back to modes</button>
+  </div>`;
+  document.getElementById('btn-guest-gate-signin').addEventListener('click',()=>{isGuest=false;showScreen('login',false);});
+  document.getElementById('btn-guest-gate-back').addEventListener('click',()=>showScreen('mode'));
+}
+
 // LOGIN
 function screenLogin(el){
   el.innerHTML=`<div style="max-width:26rem;display:flex;flex-direction:column;gap:1.5rem">
@@ -2578,7 +2627,15 @@ function screenLogin(el){
       <div id="g_id_signin"></div>
       <div id="g-fallback-msg" class="errmsg" style="display:none;text-align:center"></div>
     </div>
+    <div style="display:flex;align-items:center;gap:.75rem;color:var(--text3);font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.1em">
+      <div style="flex:1;height:1px;background:var(--border)"></div>OR<div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+    <button class="navlink" id="btn-play-guest" style="text-align:center;padding:.6rem;border:1px solid var(--border);border-radius:.75rem">🎮 Play as Guest</button>
+    <div style="text-align:center;color:var(--text3);font-family:'Space Mono',monospace;font-size:.58rem;line-height:1.5">Guests can't access Friends or Multiplayer. Sign in anytime to unlock them.</div>
   </div>`;
+  document.getElementById('btn-play-guest').addEventListener('click',()=>{
+    isGuest=true;googleUser=null;showScreen('guestname',false);
+  });
   const fallback=document.getElementById('g-fallback-msg');
   let attempts=0;
   const maxAttempts=25; // ~5s at 200ms intervals
@@ -2650,6 +2707,33 @@ function screenUsername(el){
   }
 }
 
+// GUEST NICKNAME (no Google account)
+function screenGuestName(el){
+  const suggested='Guest'+Math.floor(Math.random()*9000+1000);
+  el.innerHTML=`<div style="max-width:26rem;display:flex;flex-direction:column;gap:1.5rem">
+    <div><div class="ltitle" style="margin-bottom:.15rem">Choose a Nickname</div><div class="lsub">Playing as guest — Friends &amp; Multiplayer are locked. Sign in anytime to unlock them.</div></div>
+    <div style="display:flex;flex-direction:column;gap:.75rem">
+      <div style="position:relative"><span class="iprefix">⚡</span><input class="tinput" id="inp-gname" type="text" placeholder="Pick a nickname..." autocomplete="off" maxlength="16" value="${suggested}"/></div>
+      <div id="err" class="errmsg" style="display:none"></div>
+      <button class="btnprimary" id="btn-gname-go">Launch Session →</button>
+      <button class="navlink" id="btn-guest-to-login">← Sign in with Google instead</button>
+    </div>
+  </div>`;
+  const nameI=document.getElementById('inp-gname');
+  nameI.focus();nameI.select();
+  nameI.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
+  document.getElementById('btn-gname-go').addEventListener('click',go);
+  document.getElementById('btn-guest-to-login').addEventListener('click',()=>{isGuest=false;showScreen('login',false);});
+  function go(){
+    const n=nameI.value.trim();
+    if(!n){document.getElementById('err').textContent='Nickname required.';document.getElementById('err').style.display='block';return;}
+    if(n.length<3){document.getElementById('err').textContent='Nickname must be at least 3 characters.';document.getElementById('err').style.display='block';return;}
+    isGuest=true;pname=n;apiKey='';googleUser=null;
+    // guest sessions are not persisted — no saveAccount call
+    showScreen('mode');Voice.greet(pname);
+  }
+}
+
 // MODE
 function screenMode(el){
   const modes=[
@@ -2663,27 +2747,30 @@ function screenMode(el){
       <div><div class="stitle">Select Mode</div><div class="ssub">Choose your combat profile.</div></div>
       <button id="btn-profile-chip" style="display:flex;align-items:center;gap:.5rem;background:var(--glass);border:1px solid var(--border);border-radius:999px;padding:.35rem .75rem .35rem .35rem;cursor:pointer;color:var(--text1);font-family:var(--font-mono);font-size:.7rem">
         ${googleUser&&googleUser.picture?`<img src="${googleUser.picture}" alt="" style="width:1.6rem;height:1.6rem;border-radius:50%" referrerpolicy="no-referrer"/>`:'<span>👤</span>'}
-        <span>${pname}</span>
+        <span>${pname}${isGuest?' (Guest)':''}</span>
       </button>
     </div>
-    <div class="modegrid">${modes.map(m=>`
-      <button class="modecard" id="mc-${m.id}" style="--card-glow:${m.bg}22;--card-shadow:0 0 30px ${m.bg}22">
+    <div class="modegrid">${modes.map(m=>{
+      const locked=isGuest&&m.id==='battle';
+      return `<button class="modecard" id="mc-${m.id}" style="--card-glow:${m.bg}22;--card-shadow:0 0 30px ${m.bg}22${locked?';opacity:.55':''}">
         <div class="corner" style="background:${m.bg}"></div>
         <span class="micon">${m.icon}</span>
-        <div><div class="mname" style="color:${m.c}">${m.label}</div><div class="mdesc">${m.desc}</div></div>
-      </button>`).join('')}
+        <div><div class="mname" style="color:${m.c}">${m.label}${locked?' 🔒':''}</div><div class="mdesc">${locked?'Sign in with Google to unlock multiplayer battles.':m.desc}</div></div>
+      </button>`;}).join('')}
     </div>
     <div style="display:flex;gap:.625rem;justify-content:center;flex-wrap:wrap;margin-top:.25rem">
       <button class="navlink" id="btn-nav-history">📋 History${gameHistory.length>0?` (${gameHistory.length})`:''}</button>
-      <button class="navlink" id="btn-nav-friends">👥 Friends${friends.length>0?` (${friends.length})`:''}</button>
+      <button class="navlink" id="btn-nav-friends" style="position:relative">👥 Friends${isGuest?' 🔒':friends.length>0?` (${friends.length})`:''}${(!isGuest&&friends.filter(f=>f.status==='pending_in').length>0)?`<span style="position:absolute;top:-.4rem;right:-.4rem;background:#ef4444;color:#fff;font-size:.55rem;font-weight:800;border-radius:999px;padding:.05rem .35rem;font-family:'Space Mono',monospace;box-shadow:0 0 0 2px var(--bg2)">${friends.filter(f=>f.status==='pending_in').length}</span>`:''}</button>
     </div>
   </div>`;
   document.getElementById('btn-profile-chip').addEventListener('click',()=>{
+    if(isGuest){showScreen('login',false);return;}
     if(confirm('Sign out of '+pname+'?'))signOut();
   });
   modes.forEach(m=>{
     document.getElementById('mc-'+m.id).addEventListener('mouseenter',()=>snd.hover());
     document.getElementById('mc-'+m.id).addEventListener('click',()=>{
+      if(isGuest&&m.id==='battle'){showScreen('multiplayer');return;}
       gmode=m.id;
       if(m.id==='battle'){Voice.modeSelect(m.id);showScreen('multiplayer');}
       else{mpMode=false;Voice.modeSelect(m.id);showScreen('difficulty');}
@@ -2753,6 +2840,7 @@ function screenStaging(el){
 
 // MULTIPLAYER
 function screenMultiplayer(el){
+  if(isGuest){renderGuestGate(el,'Multiplayer','Sign in with Google to battle friends in real-time, 2-player quiz duels.');return;}
   el.innerHTML=`<div style="display:flex;flex-direction:column;gap:1.5rem;max-width:30rem;margin:0 auto">
     <div>
       <div class="stitle" style="background:linear-gradient(to right,#a78bfa,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">⚔️ Multiplayer Battle</div>
@@ -2769,7 +2857,7 @@ function screenMultiplayer(el){
         }).join('')}
       </div>
       <!-- Create or Join -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.875rem">
+      <div class="mp-create-join-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.875rem">
         <button id="btn-create-room" class="btnai" style="flex-direction:column;gap:.3rem">
           <span>🏠 Create Room</span>
           <span style="font-size:.6rem;opacity:.6">Host a new battle</span>
@@ -2814,11 +2902,11 @@ function screenMultiplayer(el){
       panelArea.innerHTML=`
         <div class="mp-panel">
           <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:#334155;letter-spacing:.2em;text-align:center">ROOM CODE — share with opponent</div>
-          <div class="mp-code" id="room-code-display" style="cursor:pointer;font-size:1.4rem" title="Click to copy">${roomCode}</div>
+          <div class="mp-code" id="room-code-display" title="Click to copy">${roomCode}</div>
           <div style="font-size:.65rem;color:#475569;text-align:center;font-family:'Space Mono',monospace">Click the code to copy · Waiting for opponent to join...</div>
-          <div style="display:flex;gap:.5rem">
-            <div class="mp-player" style="flex:1"><span class="mp-pip online"></span><span class="mp-pname">${pname}</span><span class="mp-tag host">HOST</span></div>
-            <div class="mp-player" style="flex:1"><span class="mp-pip waiting"></span><span class="mp-pname" id="mp-guest-name">Waiting...</span></div>
+          <div class="mp-players-row">
+            <div class="mp-player"><span class="mp-pip online"></span><span class="mp-pname">${pname}</span><span class="mp-tag host">HOST</span></div>
+            <div class="mp-player"><span class="mp-pip waiting"></span><span class="mp-pname" id="mp-guest-name">Waiting...</span></div>
           </div>
         </div>`;
       document.getElementById('room-code-display').addEventListener('click',()=>{
@@ -2853,7 +2941,7 @@ function screenMultiplayer(el){
     panelArea.innerHTML=`
       <div class="mp-panel">
         <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:#334155;letter-spacing:.2em;margin-bottom:.5rem">ENTER ROOM CODE</div>
-        <input id="inp-room-code" class="keyinput" placeholder="e.g. A3B8Z1" maxlength="6" style="font-size:1.5rem;letter-spacing:.3em;text-align:center;text-transform:uppercase;padding:.75rem" autocomplete="off" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"/>
+        <input id="inp-room-code" class="keyinput" placeholder="e.g. A3B8Z1" maxlength="6" style="font-size:clamp(1.1rem,7vw,1.5rem);letter-spacing:clamp(.15em,3vw,.3em);text-align:center;text-transform:uppercase;padding:.75rem .5rem" autocomplete="off" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"/>
         <button class="btnprimary" id="btn-do-join" style="margin-top:.5rem">Connect →</button>
         <div id="mp-join-status" style="font-family:'Space Mono',monospace;font-size:.65rem;color:#334155;text-align:center;min-height:1.2rem"></div>
       </div>`;
@@ -2930,13 +3018,23 @@ function screenHistory(el){
 // FRIENDS SCREEN
 // ═══════════════════════════════════════════════════════
 function screenFriends(el){
+  if(isGuest){renderGuestGate(el,'Friends','Sign in with Google to add friends, send battle invites, and get notified when they challenge you.');return;}
+  const requestCount=()=>friends.filter(f=>f.status==='pending_in').length;
+  let activeTab=requestCount()>0?'requests':'friends';
   function render(){
-    // Sort: incoming requests first, then pending outgoing, then accepted (by last seen)
-    const order={pending_in:0,pending_out:1,accepted:2};
-    const sorted=friends.map((f,i)=>({f,i})).sort((a,b)=>(order[a.f.status]??2)-(order[b.f.status]??2));
+    // Sort: pending outgoing first, then accepted (by last seen) — incoming requests live on their own tab
+    const order={pending_out:0,accepted:1};
+    const reqCount=requestCount();
+    if(activeTab==='requests'&&reqCount===0)activeTab='friends';
+    const tabItems=friends.map((f,i)=>({f,i})).filter(({f})=>activeTab==='requests'?f.status==='pending_in':f.status!=='pending_in');
+    const sorted=tabItems.sort((a,b)=>(order[a.f.status]??1)-(order[b.f.status]??1));
 
-    const friendsHtml=friends.length===0
-      ?`<div style="text-align:center;padding:2.5rem 0;color:#334155;font-family:'Space Mono',monospace;font-size:.7rem">No friends yet — play multiplayer to meet people, or send a request by name/code.</div>`
+    const emptyMsg=activeTab==='requests'
+      ?`<div style="text-align:center;padding:2.5rem 0;color:#334155;font-family:'Space Mono',monospace;font-size:.7rem">No pending requests — you're all caught up.</div>`
+      :`<div style="text-align:center;padding:2.5rem 0;color:#334155;font-family:'Space Mono',monospace;font-size:.7rem">No friends yet — play multiplayer to meet people, or send a request by name/code.</div>`;
+
+    const friendsHtml=sorted.length===0
+      ?emptyMsg
       :sorted.map(({f,i})=>{
           const displayName=f.name||f.code||'Unknown';
           const initial=(f.name||f.code||'?')[0].toUpperCase();
@@ -2980,7 +3078,7 @@ function screenFriends(el){
               </div>
               <div style="font-size:.58rem;color:#334155;font-family:'Space Mono',monospace;margin-top:.1rem">${statusLine}</div>
             </div>
-            <div style="display:flex;gap:.35rem;flex-shrink:0">${actionsHtml}</div>
+            <div class="friend-actions" style="display:flex;gap:.35rem;flex-shrink:0">${actionsHtml}</div>
           </div>`;
         }).join('');
 
@@ -3002,10 +3100,17 @@ function screenFriends(el){
         <button class="btnoff" id="btn-add-friend" style="padding:.5rem 1.1rem;border-radius:.625rem;font-size:.7rem;white-space:nowrap">Send Request</button>
       </div>
       <div id="friend-msg" style="font-family:'Space Mono',monospace;font-size:.6rem;min-height:.8rem;text-align:center"></div>
+
+      <div class="friend-tabs">
+        <button class="friend-tab${activeTab==='friends'?' active':''}" id="ftab-friends">Friends${friends.filter(f=>f.status!=='pending_in').length>0?` (${friends.filter(f=>f.status!=='pending_in').length})`:''}</button>
+        <button class="friend-tab${activeTab==='requests'?' active':''}" id="ftab-requests">📥 Requests${reqCount>0?` (${reqCount})`:''}${reqCount>0?'<span class="ftab-dot"></span>':''}</button>
+      </div>
       <div style="display:flex;flex-direction:column;gap:.4rem">${friendsHtml}</div>
       <button id="btn-back-friends" style="color:#334155;font-size:.7rem;font-family:'Space Mono',monospace;text-align:left">← Back to modes</button>
     </div>`;
 
+    document.getElementById('ftab-friends').addEventListener('click',()=>{activeTab='friends';render();});
+    document.getElementById('ftab-requests').addEventListener('click',()=>{activeTab='requests';render();});
     document.getElementById('btn-back-friends').addEventListener('click',()=>showScreen('mode'));
     const notifBtn=document.getElementById('btn-enable-notif');
     if(notifBtn)notifBtn.addEventListener('click',()=>{
